@@ -136,10 +136,16 @@ impl Scanner {
                 } else {
                     self.add_token(Slash);
                 }
-            }
+            },
+            ' ' | '\r' | '\t' => {
+                /*Ignore whitespace*/
+            },
+            '\n' => {
+                self.line += 1;
+            },
             _ => {
                 error(self.line.clone(), "Unexpected char");
-            }
+            },
         }
     }
 
