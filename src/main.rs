@@ -1,5 +1,4 @@
 use std::{env, fmt, fs};
-use std::ascii::Char;
 use std::process;
 use std::io;
 use std::io::{BufRead, Write};
@@ -7,7 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
-use crate::TokenType::{Eof, LeftParen};
+use crate::TokenType::{Comma, Dot, Eof, LeftBrace, LeftParen, Minus, Plus, RightBrace, RightParen, Semicolon, Star};
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -103,12 +102,21 @@ impl Scanner {
         let c: char = self.advance();
         match c {
             '(' => self.add_token(LeftParen),
+            ')' => self.add_token(RightParen),
+            '{' => self.add_token(RightBrace),
+            '}' => self.add_token(LeftBrace),
+            ',' => self.add_token(Comma),
+            '.' => self.add_token(Dot),
+            '-' => self.add_token(Minus),
+            '+' => self.add_token(Plus),
+            ';' => self.add_token(Semicolon),
+            '*' => self.add_token(Star),
             _ => unreachable!()
         }
     }
 
     fn add_token(&mut self, ty: TokenType) {
-        let text = &self.source.as_str()[self.start.clone()..self.current.clone()];
+        let text = &self.source.as_str()[self.start..self.current];
         self.tokens.push(Token::new(ty,
                                     text.to_string(),
                                     text.to_string(),
