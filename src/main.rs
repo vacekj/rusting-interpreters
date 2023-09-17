@@ -3,7 +3,9 @@ use std::process;
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
+use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering::Relaxed;
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -27,6 +29,10 @@ fn main() -> Result<(), io::Error> {
 fn run_file(path: &str) {
     let content = fs::read_to_string(Path::new(path)).unwrap();
     run(content);
+
+    if HAD_ERROR.load(Relaxed) {
+        exit(65)
+    }
 }
 
 fn run_prompt() -> io::Result<()> {
@@ -37,7 +43,10 @@ fn run_prompt() -> io::Result<()> {
         io::stdout().flush()?;  // Flush to ensure the prompt is displayed before waiting for input
 
         match line {
-            Ok(input) => run(input),
+            Ok(input) => {
+                run(input);
+                HAD_ERROR.store(false, Relaxed);
+            }
             Err(_) => break,
         }
     }
@@ -71,9 +80,7 @@ impl Scanner {
 }
 
 #[derive(Debug)]
-enum Token {
-
-}
+enum Token {}
 
 fn error(line: usize, message: &str) {
     report(line, "", message);
