@@ -101,32 +101,32 @@ impl Scanner {
     fn scan_token(&mut self) {
         let c: char = self.advance();
         match c {
-            '(' => self.add_token(LeftParen),
-            ')' => self.add_token(RightParen),
-            '{' => self.add_token(RightBrace),
-            '}' => self.add_token(LeftBrace),
-            ',' => self.add_token(Comma),
-            '.' => self.add_token(Dot),
-            '-' => self.add_token(Minus),
-            '+' => self.add_token(Plus),
-            ';' => self.add_token(Semicolon),
-            '*' => self.add_token(Star),
+            '(' => self.add_token(LeftParen, None),
+            ')' => self.add_token(RightParen, None),
+            '{' => self.add_token(RightBrace, None),
+            '}' => self.add_token(LeftBrace, None),
+            ',' => self.add_token(Comma, None),
+            '.' => self.add_token(Dot, None),
+            '-' => self.add_token(Minus, None),
+            '+' => self.add_token(Plus, None),
+            ';' => self.add_token(Semicolon, None),
+            '*' => self.add_token(Star, None),
             '!' => {
                 let ty = if self.metch('=') { BangEqual } else { TokenType::Bang };
-                self.add_token(ty);
+                self.add_token(ty, None);
             }
             '=' => {
                 let ty = if self.metch('=') { EqualEqual } else { TokenType::Equal };
-                self.add_token(ty);
+                self.add_token(ty, None);
             }
             '<' => {
                 let ty = if self.metch('=') { LessEqual } else { TokenType::Equal };
-                self.add_token(ty);
+                self.add_token(ty, None);
             }
             '>' => {
                 let ty = if self.metch('=') { GreaterEqual } else { TokenType::Equal };
-                self.add_token(ty);
-            },
+                self.add_token(ty, None);
+            }
             '/' => {
                 if (self.metch('/')) {
                     /* Comment goes until the very end of the line */
@@ -134,18 +134,21 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token(Slash);
+                    self.add_token(Slash, None);
                 }
-            },
+            }
             ' ' | '\r' | '\t' => {
                 /*Ignore whitespace*/
-            },
+            }
             '\n' => {
                 self.line += 1;
-            },
+            }
+            '"' => {
+                self.string();
+            }
             _ => {
                 error(self.line.clone(), "Unexpected char");
-            },
+            }
         }
     }
 
@@ -171,11 +174,11 @@ impl Scanner {
         true
     }
 
-    fn add_token(&mut self, ty: TokenType) {
+    fn add_token(&mut self, ty: TokenType, value: Option<String>) {
         let text = &self.source.as_str()[self.start..self.current];
         self.tokens.push(Token::new(ty,
                                     text.to_string(),
-                                    text.to_string(),
+                                    value.unwrap_or(text.to_string()),
                                     self.line.clone()));
     }
 
@@ -183,6 +186,24 @@ impl Scanner {
         let char_ = self.source.chars().nth(self.current.clone());
         self.current += 1;
         char_.unwrap()
+    }
+    fn string(&mut self) {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            error(self.line.clone(), "Unterminated string");
+        }
+
+        /*Closing " */
+        self.advance();
+
+        let value = &self.source.as_str()[self.start.clone() + 1..self.current.clone() - 1];
+        self.add_token(TokenType::String, Some(value.to_string()));
     }
 }
 
