@@ -3,6 +3,10 @@ use std::process;
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+// Global flag to indicate if an error has occurred
+static HAD_ERROR: AtomicBool = AtomicBool::new(false);
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
@@ -69,4 +73,13 @@ impl Scanner {
 #[derive(Debug)]
 enum Token {
 
+}
+
+fn error(line: usize, message: &str) {
+    report(line, "", message);
+}
+
+fn report(line: usize, where_: &str, message: &str) {
+    eprintln!("[line {}] Error{}: {}", line, where_, message);
+    HAD_ERROR.store(true, Ordering::Relaxed);
 }
