@@ -111,7 +111,9 @@ impl Scanner {
             '+' => self.add_token(Plus),
             ';' => self.add_token(Semicolon),
             '*' => self.add_token(Star),
-            _ => unreachable!()
+            _ => {
+                error(self.line.clone(), "Unexpected char");
+            }
         }
     }
 
@@ -128,6 +130,17 @@ impl Scanner {
         self.current += 1;
         char_.unwrap()
     }
+
+
+}
+
+fn error(line: usize, message: &str) {
+    report(line, "", message);
+}
+
+fn report(line: usize, where_: &str, message: &str) {
+    eprintln!("[line {}] Error{}: {}", line, where_, message);
+    HAD_ERROR.store(true, Ordering::Relaxed);
 }
 
 #[derive(Debug)]
@@ -216,13 +229,4 @@ impl Token {
         let literal = &self.literal;
         format!("{ty} {lexeme} {literal}");
     }
-}
-
-fn error(line: usize, message: &str) {
-    report(line, "", message);
-}
-
-fn report(line: usize, where_: &str, message: &str) {
-    eprintln!("[line {}] Error{}: {}", line, where_, message);
-    HAD_ERROR.store(true, Ordering::Relaxed);
 }
