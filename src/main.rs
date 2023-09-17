@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::{env, fmt, fs};
 use std::process;
 use std::io;
 use std::io::{BufRead, Write};
@@ -79,7 +79,7 @@ impl Scanner {
     }
 }
 
-#[derive(Debug), derive(Display)]
+#[derive(Debug)]
 enum TokenType {
     /*Single-char tokens*/
     LeftParen,
@@ -128,6 +128,17 @@ enum TokenType {
     While,
 
     Eof,
+}
+
+impl fmt::Display for TokenType {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Write strictly the first element into the supplied output
+        // stream: `f`. Returns `fmt::Result` which indicates whether the
+        // operation succeeded or failed. Note that `write!` uses syntax which
+        // is very similar to `println!`.
+        write!(f, "{}", self)
+    }
 }
 
 #[derive(Debug)]
