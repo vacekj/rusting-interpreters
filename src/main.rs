@@ -1,12 +1,14 @@
-use std::{env, fmt, fs};
-use std::process;
+use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Number, Plus, RightBrace, RightParen, Semicolon, Slash, Star};
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
+use std::process;
 use std::process::exit;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
-use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Plus, RightBrace, RightParen, Semicolon, Slash, Star};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::{env, fmt, fs};
+use std::fmt::Debug;
+use crate::TokenValue::NumberLiteral;
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -22,7 +24,6 @@ fn main() -> Result<(), io::Error> {
         2 => run_file(&args[1]),
         _ => run_prompt()?,
     }
-
 
     Ok(())
 }
@@ -41,7 +42,7 @@ fn run_prompt() -> io::Result<()> {
 
     for line in stdin.lock().lines() {
         print!("> ");
-        io::stdout().flush()?;  // Flush to ensure the prompt is displayed before waiting for input
+        io::stdout().flush()?; // Flush to ensure the prompt is displayed before waiting for input
 
         match line {
             Ok(input) => {
@@ -93,7 +94,8 @@ impl Scanner {
             self.scan_token();
         }
 
-        self.tokens.push(Token::new(Eof, String::from(""), String::from(""), 0));
+        self.tokens
+            .push(Token::new(Eof, String::from(""), None, 0));
 
         &self.tokens
     }
@@ -112,19 +114,35 @@ impl Scanner {
             ';' => self.add_token(Semicolon, None),
             '*' => self.add_token(Star, None),
             '!' => {
-                let ty = if self.metch('=') { BangEqual } else { TokenType::Bang };
+                let ty = if self.metch('=') {
+                    BangEqual
+                } else {
+                    TokenType::Bang
+                };
                 self.add_token(ty, None);
             }
             '=' => {
-                let ty = if self.metch('=') { EqualEqual } else { TokenType::Equal };
+                let ty = if self.metch('=') {
+                    EqualEqual
+                } else {
+                    TokenType::Equal
+                };
                 self.add_token(ty, None);
             }
             '<' => {
-                let ty = if self.metch('=') { LessEqual } else { TokenType::Equal };
+                let ty = if self.metch('=') {
+                    LessEqual
+                } else {
+                    TokenType::Equal
+                };
                 self.add_token(ty, None);
             }
             '>' => {
-                let ty = if self.metch('=') { GreaterEqual } else { TokenType::Equal };
+                let ty = if self.metch('=') {
+                    GreaterEqual
+                } else {
+                    TokenType::Equal
+                };
                 self.add_token(ty, None);
             }
             '/' => {
@@ -137,17 +155,19 @@ impl Scanner {
                     self.add_token(Slash, None);
                 }
             }
-            ' ' | '\r' | '\t' => {
-                /*Ignore whitespace*/
-            }
+            ' ' | '\r' | '\t' => { /*Ignore whitespace*/ }
             '\n' => {
                 self.line += 1;
             }
             '"' => {
                 self.string();
             }
-            _ => {
-                error(self.line.clone(), "Unexpected char");
+            any => {
+                if self.is_digit(any) {
+                    self.number();
+                } else {
+                    error(self.line.clone(), "Unexpected char");
+                }
             }
         }
     }
@@ -174,12 +194,14 @@ impl Scanner {
         true
     }
 
-    fn add_token(&mut self, ty: TokenType, value: Option<String>) {
+    fn add_token(&mut self, ty: TokenType, value: Option<TokenValue>) {
         let text = &self.source.as_str()[self.start..self.current];
-        self.tokens.push(Token::new(ty,
-                                    text.to_string(),
-                                    value.unwrap_or(text.to_string()),
-                                    self.line.clone()));
+        self.tokens.push(Token::new(
+            ty,
+            text.to_string(),
+            value,
+            self.line.clone(),
+        ));
     }
 
     fn advance(&mut self) -> char {
@@ -203,7 +225,37 @@ impl Scanner {
         self.advance();
 
         let value = &self.source.as_str()[self.start.clone() + 1..self.current.clone() - 1];
-        self.add_token(TokenType::String, Some(value.to_string()));
+        self.add_token(TokenType::String, Some(TokenValue::StringLiteral(value.to_string())));
+    }
+
+    fn is_digit(&self, c: char) -> bool {
+        c.clone() >= '0' && c <= '9'
+    }
+
+    fn number(&mut self) {
+        while self.is_digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && self.is_digit(self.peek_next()) {
+            self.advance();
+
+            while self.is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let value = &self.source.as_str()[self.start.clone()..self.current.clone()];
+
+        self.add_token(Number, Some(NumberLiteral(value.parse::<f64>().unwrap())));
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current.clone() + 1 >= self.source.len() {
+            return '\0';
+        }
+
+        self.source.chars().nth(self.current.clone() + 1).unwrap()
     }
 }
 
@@ -214,6 +266,12 @@ fn error(line: usize, message: &str) {
 fn report(line: usize, where_: &str, message: &str) {
     eprintln!("[line {}] Error{}: {}", line, where_, message);
     HAD_ERROR.store(true, Ordering::Relaxed);
+}
+
+#[derive(Debug)]
+enum TokenValue {
+    StringLiteral(String),
+    NumberLiteral(f64),
 }
 
 #[derive(Debug)]
@@ -282,12 +340,12 @@ impl fmt::Display for TokenType {
 struct Token {
     ty: TokenType,
     lexeme: String,
-    literal: String,
+    literal: Option<TokenValue>,
     line: usize,
 }
 
 impl Token {
-    pub fn new(ty: TokenType, lexeme: String, literal: String, line: usize) -> Token {
+    pub fn new(ty: TokenType, lexeme: String, literal: Option<TokenValue>, line: usize) -> Token {
         Token {
             literal,
             ty,
@@ -299,7 +357,6 @@ impl Token {
     pub fn to_string(&self) {
         let ty = &self.ty;
         let lexeme = &self.lexeme;
-        let literal = &self.literal;
-        format!("{ty} {lexeme} {literal}");
+        format!("{ty} {lexeme}");
     }
 }
