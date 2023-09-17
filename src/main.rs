@@ -79,8 +79,8 @@ impl Scanner {
     }
 }
 
-#[derive(Debug)]
-enum Token {
+#[derive(Debug), derive(Display)]
+enum TokenType {
     /*Single-char tokens*/
     LeftParen,
     RightParen,
@@ -128,6 +128,32 @@ enum Token {
     While,
 
     Eof,
+}
+
+#[derive(Debug)]
+struct Token {
+    ty: TokenType,
+    lexeme: String,
+    literal: String,
+    line: u32
+}
+
+impl Token {
+    pub fn new(ty: TokenType, lexeme: String, literal: String, line: u32) -> Token {
+        Token {
+            literal,
+            ty,
+            lexeme,
+            line
+        }
+    }
+
+    pub fn to_string(&self) {
+        let ty = &self.ty;
+        let lexeme = &self.lexeme;
+        let literal = &self.literal;
+        format!("{ty} {lexeme} {literal}");
+    }
 }
 
 fn error(line: usize, message: &str) {
