@@ -6,6 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
+use crate::TokenType::Eof;
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -55,7 +56,7 @@ fn run_prompt() -> io::Result<()> {
 }
 
 fn run(input: String) {
-    let scanner = Scanner::new(input.to_owned());
+    let mut scanner = Scanner::new(input.to_owned());
     let tokens = scanner.scan_tokens();
 
     for token in tokens {
@@ -65,17 +66,37 @@ fn run(input: String) {
 
 struct Scanner {
     source: String,
+    tokens: Vec<Token>,
+    start: usize,
+    current: usize,
+    line: usize,
 }
 
 impl Scanner {
     pub fn new(source: String) -> Scanner {
         Scanner {
-            source
+            source,
+            tokens: vec![],
+            start: 0,
+            current: 0,
+            line: 1
         }
     }
 
-    pub fn scan_tokens(self) -> Vec<Token> {
-        vec![]
+    fn is_at_end(&self) -> bool {
+        &self.current >= &self.source.len()
+    }
+
+    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+
+        while !&self.is_at_end() {
+            &self.start = &self.current;
+            scan_token();
+        }
+
+        self.tokens.push(Token::new(Eof, String::from(""), String::from(""), 0));
+
+        &self.tokens
     }
 }
 
@@ -146,7 +167,7 @@ struct Token {
     ty: TokenType,
     lexeme: String,
     literal: String,
-    line: u32
+    line: u32,
 }
 
 impl Token {
@@ -155,7 +176,7 @@ impl Token {
             literal,
             ty,
             lexeme,
-            line
+            line,
         }
     }
 
