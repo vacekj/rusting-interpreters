@@ -1,7 +1,7 @@
 use std::{env, fs};
 use std::process;
 use std::io;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, Write};
 use std::path::Path;
 
 fn main() -> Result<(), io::Error> {
@@ -11,8 +11,8 @@ fn main() -> Result<(), io::Error> {
         n if n > 2 => {
             println!("Usage: rlox [script]");
             process::exit(64);
-        },
-        2 => run_file(&args[1])?,
+        }
+        2 => run_file(&args[1]),
         _ => run_prompt()?,
     }
 
@@ -20,14 +20,9 @@ fn main() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn run_file(path: &str) -> io::Result<()> {
-    let content = fs::read_to_string(Path::new(path))?;
-    run(&content)
-}
-
-fn run(input: &str) -> io::Result<()> {
-    // TODO: Implement the logic for running the input
-    Ok(())
+fn run_file(path: &str) {
+    let content = fs::read_to_string(Path::new(path)).unwrap();
+    run(content);
 }
 
 fn run_prompt() -> io::Result<()> {
@@ -38,7 +33,7 @@ fn run_prompt() -> io::Result<()> {
         io::stdout().flush()?;  // Flush to ensure the prompt is displayed before waiting for input
 
         match line {
-            Ok(input) => run(&input).unwrap(),
+            Ok(input) => run(input),
             Err(_) => break,
         }
     }
@@ -46,10 +41,32 @@ fn run_prompt() -> io::Result<()> {
     Ok(())
 }
 
+fn run(input: String) {
+    let scanner = Scanner::new(input.to_owned());
+    let tokens = scanner.scan_tokens();
+
+    for token in tokens {
+        dbg!(token);
+    }
+}
+
 struct Scanner {
-    source: String;
+    source: String,
 }
 
 impl Scanner {
-    pub fn scanTokens
+    pub fn new(source: String) -> Scanner {
+        Scanner {
+            source
+        }
+    }
+
+    pub fn scan_tokens(self) -> Vec<Token> {
+        vec![]
+    }
+}
+
+#[derive(Debug)]
+enum Token {
+
 }
