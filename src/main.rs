@@ -1,4 +1,4 @@
-use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Number, Plus, RightBrace, RightParen, Semicolon, Slash, Star};
+use crate::TokenType::{And, BangEqual, Class, Comma, Dot, Else, Eof, EqualEqual, False, For, Fun, GreaterEqual, Ident, If, LeftBrace, LeftParen, LessEqual, Minus, Nil, Number, Or, Plus, Print, Return, RightBrace, RightParen, Semicolon, Slash, Star, Super, This, True, Var, While};
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
@@ -7,6 +7,7 @@ use std::process::exit;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{env, fmt, fs};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use crate::TokenValue::NumberLiteral;
 
@@ -71,16 +72,37 @@ struct Scanner {
     start: usize,
     current: usize,
     line: usize,
+    keywords: HashMap<String, TokenType>
 }
 
 impl Scanner {
     pub fn new(source: String) -> Scanner {
+        let mut keywords = HashMap::new();
+
+        keywords.insert("and".to_string(),    And);
+        keywords.insert("class".to_string(),  Class);
+        keywords.insert("else".to_string(),   Else);
+        keywords.insert("false".to_string(),  False);
+        keywords.insert("for".to_string(),    For);
+        keywords.insert("fun".to_string(),    Fun);
+        keywords.insert("if".to_string(),     If);
+        keywords.insert("nil".to_string(),    Nil);
+        keywords.insert("or".to_string(),     Or);
+        keywords.insert("print".to_string(),  Print);
+        keywords.insert("return".to_string(), Return);
+        keywords.insert("super".to_string(),  Super);
+        keywords.insert("this".to_string(),   This);
+        keywords.insert("true".to_string(),   True);
+        keywords.insert("var".to_string(),    Var);
+        keywords.insert("while".to_string(),  While);
+
         Scanner {
             source,
             tokens: vec![],
             start: 0,
             current: 0,
             line: 1,
+            keywords
         }
     }
 
@@ -146,9 +168,9 @@ impl Scanner {
                 self.add_token(ty, None);
             }
             '/' => {
-                if (self.metch('/')) {
+                if self.metch('/') {
                     /* Comment goes until the very end of the line */
-                    while (self.peek() != '\n' && !self.is_at_end()) {
+                    while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
                 } else {
@@ -163,7 +185,7 @@ impl Scanner {
                 self.string();
             }
             any => {
-                if self.is_digit(any) {
+                if self.is_digit(any.clone()) {
                     self.number();
                 } else if self.is_alpha(any) {
                     self.identifier();
@@ -270,7 +292,10 @@ impl Scanner {
             self.advance();
         }
 
-        self.add_token(TokenType::Ident, None);
+        let text = &self.source.as_str()[self.start.clone()..self.current.clone()];
+        let ty = self.keywords.get(text).unwrap_or(&Ident);
+
+        self.add_token(*ty, None);
     }
     fn is_alphanumeric(&self, c: char) -> bool {
         self.is_alpha(c.clone()) || self.is_digit(c)
@@ -292,7 +317,7 @@ enum TokenValue {
     NumberLiteral(f64),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy)]
 enum TokenType {
     /*Single-char tokens*/
     LeftParen,
