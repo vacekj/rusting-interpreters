@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
-use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Plus, RightBrace, RightParen, Semicolon, Star};
+use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Plus, RightBrace, RightParen, Semicolon, Slash, Star};
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -126,11 +126,30 @@ impl Scanner {
             '>' => {
                 let ty = if self.metch('=') { GreaterEqual } else { TokenType::Equal };
                 self.add_token(ty);
+            },
+            '/' => {
+                if (self.metch('/')) {
+                    /* Comment goes until the very end of the line */
+                    while (self.peek() != '\n' && !self.is_at_end()) {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(Slash);
+                }
             }
             _ => {
                 error(self.line.clone(), "Unexpected char");
             }
         }
+    }
+
+    /** Lookahead */
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            return '\0';
+        }
+
+        return self.source.chars().nth(self.current.clone()).unwrap();
     }
 
     fn metch(&mut self, expected: char) -> bool {
