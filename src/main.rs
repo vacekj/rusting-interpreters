@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
-use crate::TokenType::{Comma, Dot, Eof, LeftBrace, LeftParen, Minus, Plus, RightBrace, RightParen, Semicolon, Star};
+use crate::TokenType::{BangEqual, Comma, Dot, Eof, EqualEqual, GreaterEqual, LeftBrace, LeftParen, LessEqual, Minus, Plus, RightBrace, RightParen, Semicolon, Star};
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
@@ -111,10 +111,39 @@ impl Scanner {
             '+' => self.add_token(Plus),
             ';' => self.add_token(Semicolon),
             '*' => self.add_token(Star),
+            '!' => {
+                let ty = if self.metch('=') { BangEqual } else { TokenType::Bang };
+                self.add_token(ty);
+            }
+            '=' => {
+                let ty = if self.metch('=') { EqualEqual } else { TokenType::Equal };
+                self.add_token(ty);
+            }
+            '<' => {
+                let ty = if self.metch('=') { LessEqual } else { TokenType::Equal };
+                self.add_token(ty);
+            }
+            '>' => {
+                let ty = if self.metch('=') { GreaterEqual } else { TokenType::Equal };
+                self.add_token(ty);
+            }
             _ => {
                 error(self.line.clone(), "Unexpected char");
             }
         }
+    }
+
+    fn metch(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+
+        if self.source.chars().nth(self.current.clone()).unwrap() != expected {
+            return false;
+        }
+
+        self.current += 1;
+        true
     }
 
     fn add_token(&mut self, ty: TokenType) {
@@ -130,8 +159,6 @@ impl Scanner {
         self.current += 1;
         char_.unwrap()
     }
-
-
 }
 
 fn error(line: usize, message: &str) {
