@@ -165,6 +165,8 @@ impl Scanner {
             any => {
                 if self.is_digit(any) {
                     self.number();
+                } else if self.is_alpha(any) {
+                    self.identifier();
                 } else {
                     error(self.line.clone(), "Unexpected char");
                 }
@@ -256,6 +258,22 @@ impl Scanner {
         }
 
         self.source.chars().nth(self.current.clone() + 1).unwrap()
+    }
+    fn is_alpha(&self, c: char) -> bool {
+        (&c >= &'a' && &c <= &'z') ||
+            (&c >= &'A' && &c <= &'Z') ||
+            &c == &'_'
+    }
+
+    fn identifier(&mut self) {
+        while self.is_alphanumeric(self.peek()) {
+            self.advance();
+        }
+
+        self.add_token(TokenType::Ident, None);
+    }
+    fn is_alphanumeric(&self, c: char) -> bool {
+        self.is_alpha(c.clone()) || self.is_digit(c)
     }
 }
 
