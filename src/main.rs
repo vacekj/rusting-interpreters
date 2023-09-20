@@ -1,3 +1,6 @@
+mod parser;
+mod expressions;
+
 use crate::TokenType::{And, BangEqual, Class, Comma, Dot, Else, Eof, EqualEqual, False, For, Fun, GreaterEqual, Ident, If, LeftBrace, LeftParen, LessEqual, Minus, Nil, Number, Or, Plus, Print, Return, RightBrace, RightParen, Semicolon, Slash, Star, Super, This, True, Var, While};
 use std::io;
 use std::io::{BufRead, Write};
@@ -311,13 +314,13 @@ fn report(line: usize, where_: &str, message: &str) {
     HAD_ERROR.store(true, Ordering::Relaxed);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum TokenValue {
     StringLiteral(String),
     NumberLiteral(f64),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum TokenType {
     /*Single-char tokens*/
     LeftParen,
@@ -374,7 +377,7 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Token {
     ty: TokenType,
     lexeme: String,
