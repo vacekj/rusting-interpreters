@@ -1,6 +1,7 @@
 use std::io::BufRead;
+use anyhow::Error;
 use crate::expressions::expression::Expression;
-use crate::{Token, TokenType, TokenValue};
+use crate::{report, Token, TokenType, TokenValue};
 use crate::expressions::binary::Binary;
 use crate::expressions::grouping::Grouping;
 use crate::expressions::literal::{Literal, LiteralValue};
@@ -21,8 +22,8 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) {
-        self.equality();
+    fn expression(&mut self) -> Box<dyn Expression> {
+        self.equality()
     }
 
 
@@ -149,11 +150,30 @@ impl Parser {
 
         if self.match_tokens(&[TokenType::LeftParen]) {
             let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.");
-            return Box::new(Grouping::new(Box::new(expr)));
+            self.consume(TokenType::RightParen, "Expect ')' after expression.".to_string());
+            return Box::new(Grouping::new(expr));
         }
 
         // Handle unexpected token error or add a default return type here
         panic!("Unexpected token!"); // This is a placeholder, adapt error handling to your needs
+    }
+
+    fn consume(&mut self, token_type: TokenType, message: String) -> Result<(), Error> {
+        if self.check(token_type) {
+            self.advance();
+            return Ok(());
+        }
+
+        self.error(self.peek(), message)
+    }
+
+    fn error(&mut self, token: &Token, message: String) -> Result<(), Error> {
+        if token.ty == TokenType::Eof {
+            println!("{} at end {}", &token.line, &message);
+        } else {
+            println!("{} at {} {}", &token.line, &token.lexeme, &message);
+        }
+
+        Ok(())
     }
 }
