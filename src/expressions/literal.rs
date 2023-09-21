@@ -1,5 +1,4 @@
 use crate::expressions::expression::Expression;
-use crate::Token;
 
 pub struct Literal {
     value: LiteralValue

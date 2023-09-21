@@ -315,13 +315,13 @@ fn report(line: usize, where_: &str, message: &str) {
 }
 
 #[derive(Debug, Clone)]
-enum TokenValue {
+pub enum TokenValue {
     StringLiteral(String),
     NumberLiteral(f64),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum TokenType {
+pub enum TokenType {
     /*Single-char tokens*/
     LeftParen,
     RightParen,
@@ -378,7 +378,7 @@ impl fmt::Display for TokenType {
 }
 
 #[derive(Debug, Clone)]
-struct Token {
+pub struct Token {
     ty: TokenType,
     lexeme: String,
     literal: Option<TokenValue>,
