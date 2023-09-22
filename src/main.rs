@@ -1,5 +1,6 @@
 mod parser;
 mod expressions;
+mod ast_printer;
 
 use crate::TokenType::{And, BangEqual, Class, Comma, Dot, Else, Eof, EqualEqual, False, For, Fun, GreaterEqual, Ident, If, LeftBrace, LeftParen, LessEqual, Minus, Nil, Number, Or, Plus, Print, Return, RightBrace, RightParen, Semicolon, Slash, Star, Super, This, True, Var, While};
 use std::io;
@@ -12,6 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::{env, fmt, fs};
 use std::collections::HashMap;
 use std::fmt::Debug;
+use crate::parser::Parser;
 use crate::TokenValue::NumberLiteral;
 
 // Global flag to indicate if an error has occurred
@@ -61,12 +63,14 @@ fn run_prompt() -> io::Result<()> {
 }
 
 fn run(input: String) {
-    let mut scanner = Scanner::new(input.to_owned());
+    let mut scanner = Scanner::new(input);
     let tokens = scanner.scan_tokens();
-
     for token in tokens {
         dbg!(token);
     }
+    let mut parser = Parser::new(tokens.clone());
+    let expression = parser.parse();
+    
 }
 
 struct Scanner {

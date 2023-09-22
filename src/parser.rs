@@ -6,17 +6,21 @@ use crate::expressions::grouping::Grouping;
 use crate::expressions::literal::{Literal, LiteralValue};
 use crate::expressions::unary::Unary;
 
-struct Parser {
+pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
 }
 
 impl Parser {
-    fn new(tokens: Vec<Token>) -> Parser {
+    pub fn new(tokens: Vec<Token>) -> Parser {
         Parser {
             current: 0,
             tokens,
         }
+    }
+
+    pub fn parse(&mut self) -> Box<dyn Expression> {
+        self.expression()
     }
 
     fn expression(&mut self) -> Box<dyn Expression> {
