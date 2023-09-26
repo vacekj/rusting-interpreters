@@ -1,13 +1,16 @@
-use crate::expressions::expression::Expression;
+use crate::ast::AstNode;
 
 pub struct AstPrinter {
 
 }
 
 impl AstPrinter {
-    pub fn print(expression: Box<dyn Expression>) {
-        match *expression {
-
+    pub fn print(node: Box<AstNode>) {
+        match *node {
+            AstNode::Binary { .. } => {}
+            AstNode::Unary { .. } => {}
+            AstNode::Grouping { .. } => {}
+            AstNode::Literal { .. } => {}
         }
     }
 }
