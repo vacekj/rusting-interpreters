@@ -1,8 +1,6 @@
 use crate::ast::AstNode;
 
-pub struct AstPrinter {
-
-}
+pub struct AstPrinter;
 
 impl AstPrinter {
     pub fn print(node: Box<AstNode>) {
