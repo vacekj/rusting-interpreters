@@ -1,4 +1,4 @@
-use crate::Token;
+use crate::{Token, TokenType};
 
 #[derive(Debug)]
 pub enum LiteralValue {
@@ -62,16 +62,41 @@ impl AstNode {
         }
     }
 
-    pub fn parenthesize(name: String, exprs: &[&Box<AstNode>]) -> String {
+    fn evaluate(self) -> LiteralValue {
+        match self {
+            AstNode::Binary { right, operator, left } => {
+                todo!()
+            }
+            AstNode::Unary { operator, right } => {
+                let right = right.evaluate();
+
+                match operator.ty {
+                    TokenType::Minus => {
+                        match right {
+                            LiteralValue::Number(value) => {
+                                LiteralValue::Number(-value)
+                            }
+                            _ => panic!("Cannot negate non-numbers")
+                        }
+                    }
+                    _ => todo!()
+                }
+            }
+            AstNode::Grouping { node } => { node.evaluate() }
+            AstNode::Literal { value } => { value }
+        }
+    }
+
+    pub fn parenthesize(name: String, exprs: &[&AstNode]) -> String {
         let mut builder = String::new();
 
-        builder.push_str("(");
+        builder.push('(');
         builder.push_str(&name);
         for expr in exprs {
-            builder.push_str(" ");
+            builder.push(' ');
             builder.push_str(&expr.to_string());
         }
-        builder.push_str(")");
+        builder.push(')');
 
         builder
     }

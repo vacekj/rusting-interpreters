@@ -1,6 +1,7 @@
 mod parser;
 mod ast_printer;
 mod ast;
+mod interpreter;
 
 use crate::TokenType::{And, BangEqual, Class, Comma, Dot, Else, Eof, EqualEqual, False, For, Fun, GreaterEqual, Ident, If, LeftBrace, LeftParen, LessEqual, Minus, Nil, Number, Or, Plus, Print, Return, RightBrace, RightParen, Semicolon, Slash, Star, Super, This, True, Var, While};
 use std::io;
