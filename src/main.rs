@@ -1,3 +1,11 @@
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+
 mod parser;
 mod ast_printer;
 mod ast;
