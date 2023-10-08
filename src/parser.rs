@@ -1,8 +1,8 @@
 use std::io::BufRead;
 use anyhow::Error;
-use crate::{Token, TokenType, TokenValue};
 use crate::ast::AstNode::{Binary, Grouping, Literal, Unary};
 use crate::ast::{AstNode, LiteralValue};
+use crate::scanner::{Token, TokenType, TokenValue};
 
 pub struct Parser {
     tokens: Vec<Token>,
