@@ -94,7 +94,7 @@ impl AstNode {
                     TokenType::Minus => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::Number(left - right);
+                                LiteralValue::Number(left - right)
                             }
                             _ => panic!("Cannot subtract non-numbers")
                         }
@@ -102,7 +102,7 @@ impl AstNode {
                     TokenType::Slash => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::Number(left / right);
+                                LiteralValue::Number(left / right)
                             }
                             _ => panic!("Cannot divide non-numbers")
                         }
@@ -110,7 +110,7 @@ impl AstNode {
                     TokenType::Star => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::Number(left * right);
+                                LiteralValue::Number(left * right)
                             }
                             _ => panic!("Cannot product non-numbers")
                         }
@@ -118,10 +118,10 @@ impl AstNode {
                     TokenType::Plus => {
                         match (left, right) {
                             (LiteralValue::String(left), LiteralValue::String(right)) => {
-                                return LiteralValue::String(left.clone() + &*right);
+                                LiteralValue::String(left + &*right)
                             }
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::Number(left + right);
+                                LiteralValue::Number(left + right)
                             }
                             _ => panic!("Can only add numbers or strings")
                         }
@@ -129,7 +129,7 @@ impl AstNode {
                     TokenType::Greater => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::from(left > right);
+                                LiteralValue::from(left > right)
                             }
                             _ => panic!("Cannot compare non-numbers")
                         }
@@ -137,7 +137,7 @@ impl AstNode {
                     TokenType::GreaterEqual => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::from(left >= right);
+                                LiteralValue::from(left >= right)
                             }
                             _ => panic!("Cannot compare non-numbers")
                         }
@@ -145,7 +145,7 @@ impl AstNode {
                     TokenType::Less => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::from(left < right);
+                                LiteralValue::from(left < right)
                             }
                             _ => panic!("Cannot compare non-numbers")
                         }
@@ -153,16 +153,16 @@ impl AstNode {
                     TokenType::LessEqual => {
                         match (left, right) {
                             (LiteralValue::Number(left), LiteralValue::Number(right)) => {
-                                return LiteralValue::from(left <= right);
+                                LiteralValue::from(left <= right)
                             }
                             _ => panic!("Cannot compare non-numbers")
                         }
                     }
                     TokenType::Equal => {
-                        return LiteralValue::from(left == right);
+                        LiteralValue::from(left == right)
                     }
                     TokenType::BangEqual => {
-                        return LiteralValue::from(left != right);
+                        LiteralValue::from(left != right)
                     }
                     _ => {
                         dbg!(operator);
@@ -185,7 +185,10 @@ impl AstNode {
                             _ => panic!("Cannot negate non-numbers")
                         }
                     }
-                    _ => todo!()
+                    _ => {
+                        dbg!(operator);
+                        panic!("Invalid token in unary expression");
+                    }
                 }
             }
             AstNode::Grouping { node } => { node.evaluate() }
