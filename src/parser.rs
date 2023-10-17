@@ -1,6 +1,5 @@
-use std::io::BufRead;
 use anyhow::Error;
-use crate::ast::AstNode::{Binary, Grouping, Literal, Unary};
+use crate::ast::AstNode::{Binary, Expression, Grouping, Literal, PrintStatement, Unary};
 use crate::ast::{AstNode, LiteralValue};
 use crate::scanner::{Token, TokenType, TokenValue};
 
@@ -17,8 +16,13 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Box<AstNode> {
-        self.expression()
+    pub fn parse(&mut self) -> Vec<AstNode> {
+        let mut statements: Vec<AstNode> = Vec::new();
+        while !self.is_at_end() {
+            statements.push(*self.statement());
+        }
+
+        statements
     }
 
     fn expression(&mut self) -> Box<AstNode> {
@@ -155,5 +159,31 @@ impl Parser {
             println!("{} at {} {}", token.line, token.lexeme, message);
         }
         Ok(())
+    }
+
+    fn statement(&mut self) -> Box<AstNode> {
+        if self.match_tokens(&[TokenType::Print]).is_some() {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    fn print_statement(&mut self) -> Box<AstNode> {
+        let expression = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ; after value.".into()).unwrap();
+
+        Box::from(PrintStatement {
+            value: expression
+        })
+    }
+
+    fn expression_statement(&mut self) -> Box<AstNode> {
+        let expression = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ; after value.".into()).unwrap();
+
+        Box::from(Expression {
+            value: expression
+        })
     }
 }

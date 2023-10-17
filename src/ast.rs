@@ -1,4 +1,5 @@
 use std::ops::Not;
+use crate::ast::LiteralValue::Nil;
 use crate::scanner::{Token, TokenType};
 
 #[derive(Debug, PartialEq)]
@@ -46,6 +47,12 @@ pub enum AstNode {
     Literal {
         value: LiteralValue
     },
+    Expression {
+        value: Box<AstNode>
+    },
+    PrintStatement {
+        value: Box<AstNode>
+    },
 }
 
 impl AstNode {
@@ -81,6 +88,12 @@ impl AstNode {
                         exp.to_string()
                     }
                 }
+            }
+            AstNode::Expression { value } => {
+                value.to_string()
+            }
+            AstNode::PrintStatement { value } => {
+                format!("print {}", value.to_string())
             }
         }
     }
@@ -193,6 +206,13 @@ impl AstNode {
             }
             AstNode::Grouping { node } => { node.evaluate() }
             AstNode::Literal { value } => { value }
+            AstNode::Expression { value } => { value.evaluate() }
+            AstNode::PrintStatement { value } => {
+                let literal_value = value.evaluate();
+                let to_print = AstNode::Literal { value: literal_value };
+                println!("{}", to_print.to_string());
+                Nil
+            }
         }
     }
 

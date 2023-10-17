@@ -71,8 +71,10 @@ fn run(input: String) {
     let expression = parser.parse();
     dbg!(&expression);
 
-    let value = expression.evaluate();
-    dbg!(value);
+    for exp in expression {
+        let value = exp.evaluate();
+        dbg!(value);
+    }
 }
 
 fn error(line: usize, message: &str) {

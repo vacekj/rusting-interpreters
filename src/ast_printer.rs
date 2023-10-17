@@ -9,6 +9,8 @@ impl AstPrinter {
             AstNode::Unary { .. } => {}
             AstNode::Grouping { .. } => {}
             AstNode::Literal { .. } => {}
+            AstNode::Expression { .. } => {}
+            AstNode::PrintStatement { .. } => {}
         }
     }
 }
