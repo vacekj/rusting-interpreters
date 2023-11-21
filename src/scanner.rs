@@ -232,7 +232,7 @@ impl Scanner {
         let text = &self.source.as_str()[self.start.clone()..self.current.clone()];
         let ty = self.keywords.get(text).unwrap_or(&Ident);
 
-        self.add_token(*ty, None);
+        self.add_token(*ty, Some(TokenValue::Identifier(text.into())));
     }
     fn is_alphanumeric(&self, c: char) -> bool {
         self.is_alpha(c.clone()) || self.is_digit(c)
@@ -243,6 +243,7 @@ impl Scanner {
 pub enum TokenValue {
     StringLiteral(String),
     NumberLiteral(f64),
+    Identifier(String)
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -1,6 +1,7 @@
 use anyhow::Error;
-use crate::ast::AstNode::{Binary, Expression, Grouping, Literal, PrintStatement, Unary};
+use crate::ast::AstNode::{Binary, Expression, Grouping, Literal, PrintStatement, Unary, VariableExpression};
 use crate::ast::{AstNode, LiteralValue};
+use crate::scanner;
 use crate::scanner::{Token, TokenType, TokenValue};
 
 pub struct Parser {
@@ -19,7 +20,7 @@ impl Parser {
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut statements: Vec<AstNode> = Vec::new();
         while !self.is_at_end() {
-            statements.push(*self.statement());
+            statements.push(*self.declaration());
         }
 
         statements
@@ -134,6 +135,13 @@ impl Parser {
             };
         }
 
+        if self.match_tokens(&[TokenType::Ident]).is_some() {
+            return Box::new(VariableExpression {
+                name: "".into(),
+                value: None
+            })
+        }
+
         if self.match_tokens(&[TokenType::LeftParen]).is_some() {
             let expr = self.expression();
             self.consume(TokenType::RightParen, "Expect ')' after expression.".to_string()).unwrap();
@@ -143,22 +151,22 @@ impl Parser {
         panic!("Unexpected token!")  // Placeholder for error handling
     }
 
-    fn consume(&mut self, token_type: TokenType, message: String) -> Result<(), Error> {
+    fn consume(&mut self, token_type: TokenType, message: String) -> Result<Token, Error> {
         if self.check(token_type) {
-            self.advance();
-            Ok(())
+            let token = self.advance();
+            Ok(token.to_owned())
         } else {
             self.error(self.peek().clone(), message)
         }
     }
 
-    fn error(&mut self, token: Token, message: String) -> Result<(), Error> {
+    fn error(&mut self, token: Token, message: String) -> Result<Token, Error> {
         if token.ty == TokenType::Eof {
             println!("{} at end {}", token.line, message);
         } else {
             println!("{} at {} {}", token.line, token.lexeme, message);
         }
-        Ok(())
+        Ok(token)
     }
 
     fn statement(&mut self) -> Box<AstNode> {
@@ -167,6 +175,31 @@ impl Parser {
         }
 
         self.expression_statement()
+    }
+
+    fn declaration(&mut self) -> Box<AstNode> {
+        if self.match_tokens(&[TokenType::Var]).is_some() {
+            return self.var_declaration();
+        }
+        self.statement()
+    }
+
+    fn var_declaration(&mut self) -> Box<AstNode> {
+        let name = self.consume(TokenType::Ident, "Expected variable name".into()).unwrap();
+        let mut initializer = None;
+        if self.match_tokens(&[TokenType::Equal]).is_some() {
+            initializer = Some(self.expression());
+        }
+
+        self.consume(TokenType::Semicolon, "Expect ; after variable declaration".into());
+
+        Box::from(VariableExpression {
+            name: match name.literal.unwrap() {
+                TokenValue::Identifier(name) => name,
+                _ => unreachable!()
+            },
+            value: initializer,
+        })
     }
 
     fn print_statement(&mut self) -> Box<AstNode> {

@@ -1,5 +1,4 @@
 use std::ops::Not;
-use crate::ast::LiteralValue::Nil;
 use crate::scanner::{Token, TokenType};
 
 #[derive(Debug, PartialEq)]
@@ -53,6 +52,10 @@ pub enum AstNode {
     PrintStatement {
         value: Box<AstNode>
     },
+    VariableExpression {
+        value: Option<Box<AstNode>>,
+        name: String,
+    },
 }
 
 impl AstNode {
@@ -94,6 +97,13 @@ impl AstNode {
             }
             AstNode::PrintStatement { value } => {
                 format!("print {}", value.to_string())
+            }
+            AstNode::VariableExpression { name, value } => {
+                let val = match value {
+                    Some(value) => value.to_string(),
+                    None => "nil".into()
+                };
+                format!("var {} = {}", name, val)
             }
         }
     }
@@ -213,6 +223,7 @@ impl AstNode {
                 println!("{}", to_print.to_string());
                 Nil
             }
+            AstNode::VariableExpression { .. } => {}
         }
     }
 
