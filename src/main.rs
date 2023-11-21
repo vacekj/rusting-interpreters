@@ -1,11 +1,6 @@
 extern crate core;
 
-mod parser;
-mod ast_printer;
-mod ast;
-mod interpreter;
-mod scanner;
-
+use std::fmt::Debug;
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
@@ -14,9 +9,17 @@ use std::process::exit;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{env, fs};
-use std::fmt::Debug;
+
 use scanner::Scanner;
+
 use crate::parser::Parser;
+
+mod ast;
+mod ast_printer;
+mod environment;
+mod interpreter;
+mod parser;
+mod scanner;
 
 // Global flag to indicate if an error has occurred
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
