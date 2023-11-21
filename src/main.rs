@@ -1,6 +1,5 @@
 extern crate core;
 
-use std::fmt::Debug;
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
@@ -12,12 +11,11 @@ use std::{env, fs};
 
 use scanner::Scanner;
 
+use crate::environment::Environment;
 use crate::parser::Parser;
 
 mod ast;
-mod ast_printer;
 mod environment;
-mod interpreter;
 mod parser;
 mod scanner;
 
@@ -68,14 +66,14 @@ fn run_prompt() -> io::Result<()> {
 }
 
 fn run(input: String) {
+    let mut environment = Environment::new();
     let mut scanner = Scanner::new(input);
     let tokens = scanner.scan_tokens();
     let mut parser = Parser::new(tokens.clone());
     let expression = parser.parse();
-    dbg!(&expression);
 
     for exp in expression {
-        let value = exp.evaluate();
+        let value = exp.evaluate(&mut environment);
         dbg!(value);
     }
 }

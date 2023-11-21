@@ -1,23 +1,29 @@
 use std::collections::HashMap;
 
-use crate::scanner::TokenValue;
+use crate::ast::LiteralValue;
 
-struct Environment {
-    values: HashMap<String, TokenValue>,
+pub struct Environment {
+    values: HashMap<String, LiteralValue>,
 }
 
 impl Environment {
-    pub fn define(&mut self, name: String, value: TokenValue) {
+    pub fn define(&mut self, name: String, value: LiteralValue) {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: String) -> TokenValue {
+    pub fn get(&self, name: String) -> &LiteralValue {
         match self.values.get(&name) {
-            Some(val) => val.to_owned(),
+            Some(val) => val,
             None => {
                 let error_message = format!("Undefined variable {}", name);
                 panic!("{}", error_message);
             }
+        }
+    }
+
+    pub fn new() -> Environment {
+        Environment {
+            values: HashMap::new(),
         }
     }
 }
