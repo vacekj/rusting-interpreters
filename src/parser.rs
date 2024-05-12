@@ -1,7 +1,9 @@
 use anyhow::Error;
-use crate::ast::AstNode::{Binary, Expression, Grouping, Literal, PrintStatement, Unary, VariableExpression};
+
+use crate::ast::AstNode::{
+    Binary, Expression, Grouping, Literal, PrintStatement, Unary, VariableExpression,
+};
 use crate::ast::{AstNode, LiteralValue};
-use crate::scanner;
 use crate::scanner::{Token, TokenType, TokenValue};
 
 pub struct Parser {
@@ -11,10 +13,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser {
-            current: 0,
-            tokens,
-        }
+        Parser { current: 0, tokens }
     }
 
     pub fn parse(&mut self) -> Vec<AstNode> {
@@ -32,9 +31,14 @@ impl Parser {
 
     fn equality(&mut self) -> Box<AstNode> {
         let mut exp = self.comparison();
-        while let Some(operator) = self.match_tokens(&[TokenType::BangEqual, TokenType::EqualEqual]) {
+        while let Some(operator) = self.match_tokens(&[TokenType::BangEqual, TokenType::EqualEqual])
+        {
             let right = self.comparison();
-            exp = Box::new(Binary { left: exp, operator, right });
+            exp = Box::new(Binary {
+                left: exp,
+                operator,
+                right,
+            });
         }
         exp
     }
@@ -49,7 +53,9 @@ impl Parser {
     }
 
     fn check(&self, token_type: TokenType) -> bool {
-        if self.is_at_end() { return false; }
+        if self.is_at_end() {
+            return false;
+        }
         self.peek().ty == token_type
     }
 
@@ -81,7 +87,11 @@ impl Parser {
             TokenType::LessEqual,
         ]) {
             let right = self.term();
-            expr = Box::new(Binary { left: expr, operator, right });
+            expr = Box::new(Binary {
+                left: expr,
+                operator,
+                right,
+            });
         }
         expr
     }
@@ -90,7 +100,11 @@ impl Parser {
         let mut expr = self.factor();
         while let Some(operator) = self.match_tokens(&[TokenType::Minus, TokenType::Plus]) {
             let right = self.factor();
-            expr = Box::new(Binary { left: expr, operator, right });
+            expr = Box::new(Binary {
+                left: expr,
+                operator,
+                right,
+            });
         }
         expr
     }
@@ -99,7 +113,11 @@ impl Parser {
         let mut expr = self.unary();
         while let Some(operator) = self.match_tokens(&[TokenType::Slash, TokenType::Star]) {
             let right = self.unary();
-            expr = Box::new(Binary { left: expr, operator, right });
+            expr = Box::new(Binary {
+                left: expr,
+                operator,
+                right,
+            });
         }
         expr
     }
@@ -114,41 +132,51 @@ impl Parser {
 
     fn primary(&mut self) -> Box<AstNode> {
         if self.match_tokens(&[TokenType::False]).is_some() {
-            return Box::new(Literal { value: LiteralValue::False });
+            return Box::new(Literal {
+                value: LiteralValue::False,
+            });
         }
         if self.match_tokens(&[TokenType::True]).is_some() {
-            return Box::new(Literal { value: LiteralValue::True });
+            return Box::new(Literal {
+                value: LiteralValue::True,
+            });
         }
         if self.match_tokens(&[TokenType::Nil]).is_some() {
-            return Box::new(Literal { value: LiteralValue::Nil });
+            return Box::new(Literal {
+                value: LiteralValue::Nil,
+            });
         }
 
         if let Some(token) = self.match_tokens(&[TokenType::Number, TokenType::String]) {
             return match token.literal {
-                Some(TokenValue::StringLiteral(ref value)) => {
-                    Box::new(Literal { value: LiteralValue::String(value.clone()) })
-                }
-                Some(TokenValue::NumberLiteral(value)) => {
-                    Box::new(Literal { value: LiteralValue::Number(value) })
-                }
-                _ => panic!("Unexpected token value!"),  // Handle other cases or errors
+                Some(TokenValue::StringLiteral(ref value)) => Box::new(Literal {
+                    value: LiteralValue::String(value.clone()),
+                }),
+                Some(TokenValue::NumberLiteral(value)) => Box::new(Literal {
+                    value: LiteralValue::Number(value),
+                }),
+                _ => panic!("Unexpected token value!"), // Handle other cases or errors
             };
         }
 
         if self.match_tokens(&[TokenType::Ident]).is_some() {
             return Box::new(VariableExpression {
                 name: "".into(),
-                value: None
-            })
+                value: None,
+            });
         }
 
         if self.match_tokens(&[TokenType::LeftParen]).is_some() {
             let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.".to_string()).unwrap();
+            self.consume(
+                TokenType::RightParen,
+                "Expect ')' after expression.".to_string(),
+            )
+            .unwrap();
             return Box::new(Grouping { node: expr });
         }
 
-        panic!("Unexpected token!")  // Placeholder for error handling
+        panic!("Unexpected token!") // Placeholder for error handling
     }
 
     fn consume(&mut self, token_type: TokenType, message: String) -> Result<Token, Error> {
@@ -185,18 +213,24 @@ impl Parser {
     }
 
     fn var_declaration(&mut self) -> Box<AstNode> {
-        let name = self.consume(TokenType::Ident, "Expected variable name".into()).unwrap();
+        let name = self
+            .consume(TokenType::Ident, "Expected variable name".into())
+            .unwrap();
         let mut initializer = None;
         if self.match_tokens(&[TokenType::Equal]).is_some() {
             initializer = Some(self.expression());
         }
 
-        self.consume(TokenType::Semicolon, "Expect ; after variable declaration".into());
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ; after variable declaration".into(),
+        )
+        .expect("Expect ; after variable declaration");
 
         Box::from(VariableExpression {
             name: match name.literal.unwrap() {
                 TokenValue::Identifier(name) => name,
-                _ => unreachable!()
+                _ => unreachable!(),
             },
             value: initializer,
         })
@@ -204,19 +238,17 @@ impl Parser {
 
     fn print_statement(&mut self) -> Box<AstNode> {
         let expression = self.expression();
-        self.consume(TokenType::Semicolon, "Expect ; after value.".into()).unwrap();
+        self.consume(TokenType::Semicolon, "Expect ; after value.".into())
+            .unwrap();
 
-        Box::from(PrintStatement {
-            value: expression
-        })
+        Box::from(PrintStatement { value: expression })
     }
 
     fn expression_statement(&mut self) -> Box<AstNode> {
         let expression = self.expression();
-        self.consume(TokenType::Semicolon, "Expect ; after value.".into()).unwrap();
+        self.consume(TokenType::Semicolon, "Expect ; after value.".into())
+            .unwrap();
 
-        Box::from(Expression {
-            value: expression
-        })
+        Box::from(Expression { value: expression })
     }
 }
