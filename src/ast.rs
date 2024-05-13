@@ -89,11 +89,10 @@ impl AstNode {
                 format!("print {}", value.to_string())
             }
             AstNode::VariableExpression { name, value } => {
-                let val =
-                    match value {
-                        Some(value) => value.to_string(),
-                        None => "nil".into(),
-                    };
+                let val = match value {
+                    Some(value) => value.to_string(),
+                    None => "nil".into(),
+                };
                 format!("var {} = {}", name, val)
             }
         }
@@ -199,6 +198,7 @@ impl AstNode {
                     let val = val.evaluate(environment);
                     environment.define(name, val);
                 }
+                // TODO: continue here with https://craftinginterpreters.com/statements-and-state.html#interpreting-global-variables
                 LiteralValue::Nil
             }
         }
