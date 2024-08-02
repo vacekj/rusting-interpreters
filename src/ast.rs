@@ -53,6 +53,9 @@ pub enum AstNode {
     Expression {
         value: Box<AstNode>,
     },
+    StmtExpression {
+        value: Box<AstNode>,
+    },
     PrintStatement {
         value: Box<AstNode>,
     },
@@ -94,6 +97,9 @@ impl AstNode {
                     None => "nil".into(),
                 };
                 format!("var {} = {}", name, val)
+            }
+            AstNode::StmtExpression { value } => {
+                format!("stmt expr {}", value.to_string())
             }
         }
     }
@@ -199,6 +205,10 @@ impl AstNode {
                     environment.define(name, val);
                 }
                 // TODO: continue here with https://craftinginterpreters.com/statements-and-state.html#interpreting-global-variables
+                LiteralValue::Nil
+            }
+            AstNode::StmtExpression { value } => {
+                value.evaluate(environment);
                 LiteralValue::Nil
             }
         }

@@ -1,7 +1,7 @@
 use anyhow::Error;
 
 use crate::ast::AstNode::{
-    Binary, Expression, Grouping, Literal, PrintStatement, Unary, VariableExpression,
+    Binary, Grouping, Literal, PrintStatement, StmtExpression, Unary, VariableExpression,
 };
 use crate::ast::{AstNode, LiteralValue};
 use crate::scanner::{Token, TokenType, TokenValue};
@@ -241,7 +241,7 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expect ; after value.".into())
             .unwrap();
 
-        Box::from(PrintStatement { value: expression })
+        PrintStatement { value: expression }.into()
     }
 
     fn expression_statement(&mut self) -> Box<AstNode> {
@@ -249,6 +249,6 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expect ; after value.".into())
             .unwrap();
 
-        Box::from(Expression { value: expression })
+        StmtExpression { value: expression }.into()
     }
 }
