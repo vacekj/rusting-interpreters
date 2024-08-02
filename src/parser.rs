@@ -1,7 +1,8 @@
 use anyhow::Error;
 
 use crate::ast::AstNode::{
-    Binary, Grouping, Literal, PrintStatement, StmtExpression, Unary, VariableExpression,
+    Binary, Grouping, Literal, PrintStatement, StmtExpression, StmtVariable, Unary,
+    VariableDeclaration, VariableExpression,
 };
 use crate::ast::{AstNode, LiteralValue};
 use crate::scanner::{Token, TokenType, TokenValue};
@@ -161,8 +162,7 @@ impl Parser {
 
         if self.match_tokens(&[TokenType::Ident]).is_some() {
             return Box::new(VariableExpression {
-                name: "".into(),
-                value: None,
+                value: self.previous().clone().into(),
             });
         }
 
@@ -227,13 +227,14 @@ impl Parser {
         )
         .expect("Expect ; after variable declaration");
 
-        Box::from(VariableExpression {
+        StmtVariable {
             name: match name.literal.unwrap() {
                 TokenValue::Identifier(name) => name,
                 _ => unreachable!(),
             },
-            value: initializer,
-        })
+            initializer,
+        }
+        .into()
     }
 
     fn print_statement(&mut self) -> Box<AstNode> {

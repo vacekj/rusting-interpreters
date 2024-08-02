@@ -60,8 +60,11 @@ pub enum AstNode {
         value: Box<AstNode>,
     },
     VariableExpression {
-        value: Option<Box<AstNode>>,
+        value: Box<Token>,
+    },
+    StmtVariable {
         name: String,
+        initializer: Option<Box<AstNode>>,
     },
 }
 
@@ -73,8 +76,8 @@ impl AstNode {
                 operator,
                 right,
             } => AstNode::parenthesize(operator.lexeme.clone(), &[left, right]),
-            AstNode::Unary { .. } => {
-                todo!()
+            AstNode::Unary { operator, right } => {
+                format!("{:?} {}", operator.to_string(), right.to_string())
             }
             AstNode::Grouping { node } => node.to_string(),
             AstNode::Literal { value } => match value {
@@ -96,7 +99,7 @@ impl AstNode {
                     Some(value) => value.to_string(),
                     None => "nil".into(),
                 };
-                format!("var {} = {}", name, val)
+                format!("var {:?} = {}", name, val)
             }
             AstNode::StmtExpression { value } => {
                 format!("stmt expr {}", value.to_string())
