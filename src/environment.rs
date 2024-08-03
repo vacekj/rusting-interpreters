@@ -8,12 +8,10 @@ pub struct Environment {
 
 impl Environment {
     pub fn define(&mut self, name: String, value: LiteralValue) {
-        dbg!(self.values.insert(name, value));
-        dbg!(&self.values);
+        self.values.insert(name, value);
     }
 
     pub fn get(&self, name: String) -> &LiteralValue {
-        dbg!(&self.values);
         match self.values.get(&name) {
             Some(val) => val,
             None => {

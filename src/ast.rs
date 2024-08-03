@@ -211,13 +211,9 @@ impl AstNode {
                     let value = value.evaluate(environment);
                     environment.define(name, value);
                 }
-                dbg!(&environment.values);
                 LiteralValue::Nil
             }
-            AstNode::VariableExpression { value } => {
-                dbg!(&environment.values);
-                environment.get(value).clone()
-            }
+            AstNode::VariableExpression { value } => environment.get(value).clone(),
         }
     }
 

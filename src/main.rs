@@ -75,7 +75,6 @@ fn run(input: String, environment: &mut Environment) {
 
     for exp in expression {
         let value = exp.evaluate(environment);
-        dbg!(value);
     }
 }
 
