@@ -1,8 +1,7 @@
 use anyhow::Error;
 
 use crate::ast::AstNode::{
-    Binary, Grouping, Literal, PrintStatement, StmtExpression, StmtVariable, Unary,
-    VariableDeclaration, VariableExpression,
+    Binary, Grouping, Literal, StmtExpression, StmtPrint, StmtVariable, Unary, VariableExpression,
 };
 use crate::ast::{AstNode, LiteralValue};
 use crate::scanner::{Token, TokenType, TokenValue};
@@ -161,9 +160,10 @@ impl Parser {
         }
 
         if self.match_tokens(&[TokenType::Ident]).is_some() {
-            return Box::new(VariableExpression {
-                value: self.previous().clone().into(),
-            });
+            return VariableExpression {
+                value: self.previous().clone().lexeme,
+            }
+            .into();
         }
 
         if self.match_tokens(&[TokenType::LeftParen]).is_some() {
@@ -242,7 +242,7 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expect ; after value.".into())
             .unwrap();
 
-        PrintStatement { value: expression }.into()
+        StmtPrint { value: expression }.into()
     }
 
     fn expression_statement(&mut self) -> Box<AstNode> {

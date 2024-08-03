@@ -3,7 +3,7 @@ use std::ops::Not;
 use crate::environment::Environment;
 use crate::scanner::{Token, TokenType};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {
     Number(f64),
     String(String),
@@ -33,7 +33,7 @@ impl From<bool> for LiteralValue {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AstNode {
     Binary {
         left: Box<AstNode>,
@@ -53,14 +53,14 @@ pub enum AstNode {
     Expression {
         value: Box<AstNode>,
     },
+    VariableExpression {
+        value: String,
+    },
     StmtExpression {
         value: Box<AstNode>,
     },
-    PrintStatement {
+    StmtPrint {
         value: Box<AstNode>,
-    },
-    VariableExpression {
-        value: Box<Token>,
     },
     StmtVariable {
         name: String,
@@ -91,18 +91,18 @@ impl AstNode {
                 LiteralValue::Expression(exp) => exp.to_string(),
             },
             AstNode::Expression { value } => value.to_string(),
-            AstNode::PrintStatement { value } => {
+            AstNode::StmtPrint { value } => {
                 format!("print {}", value.to_string())
             }
-            AstNode::VariableExpression { name, value } => {
-                let val = match value {
-                    Some(value) => value.to_string(),
-                    None => "nil".into(),
-                };
-                format!("var {:?} = {}", name, val)
-            }
+
             AstNode::StmtExpression { value } => {
                 format!("stmt expr {}", value.to_string())
+            }
+            AstNode::StmtVariable { name, initializer } => {
+                format!("var {:?} = {:?}", name, initializer)
+            }
+            AstNode::VariableExpression { value } => {
+                format!("var expression {:?} ", value)
             }
         }
     }
@@ -194,7 +194,7 @@ impl AstNode {
             AstNode::Grouping { node } => node.evaluate(environment),
             AstNode::Literal { value } => value,
             AstNode::Expression { value } => value.evaluate(environment),
-            AstNode::PrintStatement { value } => {
+            AstNode::StmtPrint { value } => {
                 let literal_value = value.evaluate(environment);
                 let to_print = AstNode::Literal {
                     value: literal_value,
@@ -202,17 +202,21 @@ impl AstNode {
                 println!("{}", to_print.to_string());
                 LiteralValue::Nil
             }
-            AstNode::VariableExpression { value, name } => {
-                if let Some(val) = value {
-                    let val = val.evaluate(environment);
-                    environment.define(name, val);
-                }
-                // TODO: continue here with https://craftinginterpreters.com/statements-and-state.html#interpreting-global-variables
-                LiteralValue::Nil
-            }
             AstNode::StmtExpression { value } => {
                 value.evaluate(environment);
                 LiteralValue::Nil
+            }
+            AstNode::StmtVariable { name, initializer } => {
+                if let Some(value) = initializer {
+                    let value = value.evaluate(environment);
+                    environment.define(name, value);
+                }
+                dbg!(&environment.values);
+                LiteralValue::Nil
+            }
+            AstNode::VariableExpression { value } => {
+                dbg!(&environment.values);
+                environment.get(value).clone()
             }
         }
     }

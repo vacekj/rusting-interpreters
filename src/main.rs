@@ -39,7 +39,8 @@ fn main() -> Result<(), io::Error> {
 
 fn run_file(path: &str) {
     let content = fs::read_to_string(Path::new(path)).unwrap();
-    run(content);
+    let mut environment = Environment::new();
+    run(content, &mut environment);
 
     if HAD_ERROR.load(Relaxed) {
         exit(65)
@@ -48,6 +49,7 @@ fn run_file(path: &str) {
 
 fn run_prompt() -> io::Result<()> {
     let stdin = io::stdin();
+    let mut environment = Environment::new();
 
     for line in stdin.lock().lines() {
         print!("> ");
@@ -55,7 +57,7 @@ fn run_prompt() -> io::Result<()> {
 
         match line {
             Ok(input) => {
-                run(input);
+                run(input, &mut environment);
                 HAD_ERROR.store(false, Relaxed);
             }
             Err(_) => break,
@@ -65,15 +67,14 @@ fn run_prompt() -> io::Result<()> {
     Ok(())
 }
 
-fn run(input: String) {
-    let mut environment = Environment::new();
+fn run(input: String, environment: &mut Environment) {
     let mut scanner = Scanner::new(input);
     let tokens = scanner.scan_tokens();
     let mut parser = Parser::new(tokens.clone());
     let expression = parser.parse();
 
     for exp in expression {
-        let value = exp.evaluate(&mut environment);
+        let value = exp.evaluate(environment);
         dbg!(value);
     }
 }
